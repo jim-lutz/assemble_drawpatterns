@@ -1,0 +1,28 @@
+2018-10-30
+
+climate zone inlet water temperatures from 
+/home/jiml/HotWaterResearch/projects/How Low/draw_patterns/data/DT_Tinlets.csv
+
+This is 365 daily inlet water temperatures by all 16 climate zones.
+
+make_total_drawpattern.R
+only made daily summaries as .csv not draw patterns
+will need to revise it.
+
+not true
+/home/jiml/HotWaterResearch/projects/How Low/draw_patterns/data/DT_total_drawpatterns.Rdata
+
+has data I want. Just read and manipulate that into 5 csv files by number of bedrooms sorted by time of year.
+
+copy 
+/home/jiml/HotWaterResearch/projects/How Low/draw_patterns/make_total_drawpattern.R
+/home/jiml/HotWaterResearch/projects/How Low/draw_patterns/setup.R
+/home/jiml/HotWaterResearch/projects/How Low/draw_patterns/setup_wd.R
+to this directory.
+
+set up a new git repository for this small project
+see http://happygitwithr.com/
+Chapter 18 Existing project, GitHub last
+
+
+
