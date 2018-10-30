@@ -24,5 +24,14 @@ set up a new git repository for this small project
 see http://happygitwithr.com/
 Chapter 18 Existing project, GitHub last
 
+forgot 
+    $ git init
+    
+think I have it now.
 
+got a good start, next is loop through all the bedrooms
+there's one small faucet draw during a time change
+
+
+    
 

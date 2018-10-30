@@ -1,11 +1,11 @@
-# make_total_drawpattern.R
+# assemble_drawpatterns.R
 # script to build the complete draw pattern for CBECC_Res 
 # contains all the draws for all days of the year for all number of bedrooms
+# revised from /home/jiml/HotWaterResearch/projects/How Low/draw_patterns/make_total_drawpattern.R
+# reads /home/jiml/HotWaterResearch/projects/How Low/draw_patterns/data/DT_total_drawpatterns.Rdata
+# saves to drawpattern_{1:5}bed.csv
+
 # fields are:
-#   DHWProfile    "DHW1BR"
-#   DHWDAYUSE     "3H1"
-#   bedrooms      1-5
-#   people        1-6
 #   datetime      ymd_hms as POSIXct in tz "America/Los_Angeles"
 #   yday          1-365
 #   month         "Jan" "Feb", etc.
@@ -14,10 +14,7 @@
 #   enduse        Bath	ClothesWasher	Dishwasher	Faucet	Shower
 #   duration	    seconds
 #   mxedFlow	    GPM
-#   hotFlow       GPM
-#   coldFlow      GPM 
-# saves DT_total_drawpattern to .Rdata and .csv files
-# Jim Lutz  "Fri Aug  3 08:59:12 2018"
+# Jim Lutz  "Tue Oct 30 11:02:08 2018"
 
 # set packages & etc
 source("setup.R")
@@ -25,93 +22,68 @@ source("setup.R")
 # set up paths to working directories
 source("setup_wd.R")
 
-#  load DT_DHWProfiles.Rdata
-load( file = paste0(wd_data,"DT_DHWProfiles.Rdata"))
+#  load DT_total_drawpatterns.Rdata
+load( file = "/home/jiml/HotWaterResearch/projects/How Low/draw_patterns/data/DT_total_drawpatterns.Rdata")
 
-DT_DHWProfiles
-str(DT_DHWProfiles)
-# Classes ‘data.table’ and 'data.frame':	365 obs. of  6 variables:
-# $ day   : int  1 2 3 4 5 6 7 8 9 10 ...
-# $ DHW1BR: chr  "1H1" "1D3" "3E2" "1E1" ...
-# $ DHW2BR: chr  "1H1" "3D3" "1E2" "4E1" ...
-# $ DHW3BR: chr  "3H1" "1D3" "2E2" "4E1" ...
-# $ DHW4BR: chr  "3H1" "6D3" "1E2" "2E1" ...
-# $ DHW5BR: chr  "4H1" "2D3" "5E2" "3E1" ...
-# - attr(*, ".internal.selfref")=<externalptr> 
-#   - attr(*, "index")= atomic  
-# ..- attr(*, "__day")= int 
-
-# change into a long dataset
-DT_DHWProfiles.long <-
-melt.data.table( data = DT_DHWProfiles, 
-                 id.vars = "day", 
-                 variable.name = "DHWProfile",
-                 value.name = "DHWDAYUSE")
-
-# extract number of bedrooms 
-DT_DHWProfiles.long[ , bedrooms := str_extract(DHWProfile, "[1-5]" ) ]
-
-# extract number of people 
-DT_DHWProfiles.long[ , people := str_extract_all(DHWDAYUSE, "[1-6]", simplify = TRUE)[1:length(DHWDAYUSE),1] ]
-
-# change name of day to yday
-setnames(DT_DHWProfiles.long, old = c("day"), new = c("yday"))
-
-#  load DT_DHWUSEs.Rdata
-load( file = paste0(wd_data,"DT_DHWUSEs.Rdata"))
-
-DT_DHWUSEs
-
-# merge DT_DHWProfiles.long and DT_DHWUSEs into one long draw pattern
-DT_total_drawpatterns <-
-merge(DT_DHWProfiles.long, DT_DHWUSEs, by="DHWDAYUSE", allow.cartesian = TRUE)
-
-# remove id & s
-DT_total_drawpatterns[ , c("id", "s"):= NULL]
-
-# duration in seconds
-DT_total_drawpatterns[ , duration := duration * 60]
-
-# make a data.table for 2009 of character dates & wday
-# where row number is yday 
-days_of_year <- seq(ymd("2009-01-01", tz="America/Los_Angeles"), 
-                    ymd("2009-12-31", tz="America/Los_Angeles"), 
-                    by="days")
-
-DT_date2009 <- data.table(date=as.character(days_of_year, format="%F"),
-                          wday=wday(days_of_year, label = TRUE, abbr = TRUE))
-# add dates
-DT_total_drawpatterns[ , c("date","wday") := list( DT_date2009[yday,date],
-                                                   DT_date2009[yday,wday])
-                       ]
-
-# set order of columns
-names(DT_total_drawpatterns)
-
-#   DHWProfile    "DHW1BR"
-#   DHWDAYUSE     "3H1"
-#   bedrooms      1-5
-#   people        1-6
-#   yday          1-365
-#   wday          Sun Mon Tue Wed Thu Fri Sat
-#   date          "yyyy-mm-dd" in tz "America/Los_Angeles"
-#   start         "hh:mm:ss" as character
-#   enduse        Bath	ClothesWasher	Dishwasher	Faucet	Shower
-#   duration	    seconds
-#   mxedFlow	    GPM
-#   hotFlow       GPM
-#   coldFlow      GPM 
-
-setcolorder(DT_total_drawpatterns,
-            c("DHWProfile", "DHWDAYUSE", "bedrooms", "people", 
-              "yday", "wday", "date", "start",
-              "enduse", "duration", "mixedFlow", "hotFlow", "coldFlow")
-            )
+tables()
 
 DT_total_drawpatterns
+str(DT_total_drawpatterns)
+# Classes ‘data.table’ and 'data.frame':	114573 obs. of  13 variables:
+# $ DHWProfile: Factor w/ 5 levels "DHW1BR","DHW2BR",..: 1 1 1 1 1 1 1 1 1 1 ...
+# $ DHWDAYUSE : chr  "1D1" "1D1" "1D1" "1D1" ...
+# $ bedrooms  : chr  "1" "1" "1" "1" ...
+# $ people    : chr  "1" "1" "1" "1" ...
+# $ yday      : int  13 13 13 13 13 13 13 13 13 13 ...
+# $ wday      : Ord.factor w/ 7 levels "Sun"<"Mon"<"Tue"<..: 3 3 3 3 3 3 3 3 3 3 ...
+# $ date      : chr  "2009-01-13" "2009-01-13" "2009-01-13" "2009-01-13" ...
+# $ start     : chr  "01:18:00" "01:52:12" "02:05:24" "02:06:00" ...
+# $ enduse    : chr  "Dishwasher" "Dishwasher" "Faucet" "Dishwasher" ...
+# $ duration  : num  100 90 10 80 10 ...
+# $ mixedFlow : num  1.145 1.014 0.317 1.179 0.226 ...
+# $ hotFlow   : num  1.145 1.014 0.159 1.179 0.113 ...
+# $ coldFlow  : num  0 0 0.159 0 0.113 ...
+# - attr(*, ".internal.selfref")=<externalptr> 
+#   - attr(*, "sorted")= chr "DHWDAYUSE
 
-# save the DT_total_drawpatterns data as an .Rdata file
-save(DT_total_drawpatterns, file = paste0(wd_data,"DT_total_drawpatterns.Rdata"))
+# sort by bedrooms, date, start
+setkeyv(DT_total_drawpatterns, cols = c('bedrooms', 'date', 'start' ))
+
+# add Start_Time as date & start in a POSIXct format
+#DT_total_drawpatterns[ , Start_Time := paste(strftime(ymd(date),"%m/%d/%Y"),start)]
+DT_total_drawpatterns[ , Start_Time := paste(date,start)]
+DT_total_drawpatterns[ , Start_Time := ymd_hms(Start_Time, tz="America/Los_Angeles")]
+# Warning message:
+#   1 failed to parse. 
+
+# which one?
+DT_total_drawpatterns[is.na(Start_Time)]
+#    DHWProfile DHWDAYUSE bedrooms people yday wday       date    start enduse duration
+# 1:     DHW3BR       3E2        3      3   67  Sun 2009-03-08 02:42:36 Faucet    10.02
+#    mixedFlow hotFlow coldFlow Start_Time
+# 1:     0.272   0.136    0.136       <NA>
+# probably a time change day, 
+# ignore it for now, it's one small faucet draw
+
+# list number of days by bedrooms
+DT_total_drawpatterns[ , list(ndays=length(unique(date))), 
+                       by=c('bedrooms')]
+#    bedrooms ndays
+# 1:        1   365
+# 2:        2   365
+# 3:        3   365
+# 4:        4   365
+# 5:        5   365
+
+# list number of days and ave draws per day by bedrooms
+DT_total_drawpatterns[ , list(ndays=length(unique(date)),
+                              ndraws = ave), 
+                       by=c('bedrooms')]
+
+
+
+
+
 
 # save the DT_total_drawpatterns data as a csv file
 write.csv(DT_total_drawpatterns, 
