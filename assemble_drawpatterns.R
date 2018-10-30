@@ -80,82 +80,10 @@ names(DT_total_drawpatterns)
 DT_total_drawpatterns[ ,c("DHWProfile", "DHWDAYUSE", "people",
                           "hotFlow", "coldFlow") := NULL ]
 
-# save the data by bedrooms to csv files
-DT_total_drawpatterns[,write.csv(DT_total_drawpatterns, 
-                                 file= paste0(wd_data,"drawpatterns_",bedrooms,".csv"), 
-                                 row.names = FALSE),
-                      by='bedrooms' ]
-
-
-# save the DT_total_drawpatterns data as a csv file
-write.csv(DT_total_drawpatterns, 
-          file= paste0(wd_data,"DT_total_drawpatterns.csv"), 
-          row.names = FALSE)
-
-# some brief data checks
-setorder(DT_total_drawpatterns, DHWProfile, DHWDAYUSE, date, start)
-
-DT_total_drawpatterns[ , list(first = min(date),
-                              last  = max(date)),
-                       by=c('DHWProfile', 'enduse')]
-# seems OK
-
-# summary by # bedroooms, date, WEH, # people, # draws, total (mixed) volume, 
-# sum draws by enduse
-names(DT_total_drawpatterns)
-
-# build the summary by day
-DT_daily_summary <-
-  DT_total_drawpatterns[,list(date      = unique(date),
-                              wday      = unique(wday),
-                              DHWDAYUSE = unique(DHWDAYUSE),
-                              bedrooms  = unique(bedrooms),
-                              people    = unique(people),
-                              totvol    = sum(mixedFlow*duration/60),
-                              ndraw     = length(start)
-                              ),
-                        by=c('DHWProfile', 'yday')][order(DHWProfile,yday)]
-
-# count number of enduses by DHWProfile & day
-DT_total_enduses <- 
-  DT_total_drawpatterns[,list(ndraws = length(start)), 
-                        by=c('DHWProfile', 'yday', 'enduse')
-                        ][order(DHWProfile,yday)]
-
-# rearrange DT_total_enduses to wide
-DT_daily_enduses <-
-  dcast(DT_total_enduses, 
-        DHWProfile + yday ~ enduse, value.var = 'ndraws', fill = 0)
-
-# combine daily summary and daily enduses
-DT_daily <- 
-  merge(DT_daily_summary, DT_daily_enduses, by=c('DHWProfile', 'yday'))
-
-# reorder the columns
-setcolorder(DT_daily, c('DHWProfile', 'yday', 'date', 'wday', 'DHWDAYUSE', 'bedrooms', 'people',
-                        'totvol', 'ndraw', 
-                        'Faucet', 'Shower', 'ClothesWasher', 'Dishwasher', 'Bath'))
-
-# save the DT_daily data as a csv file
-write.csv(DT_daily, file= paste0(wd_data,"DT_daily.csv"), row.names = FALSE)
-
-# separate files by number of bedrooms
-for(b in 1:5) {
-  write.csv(DT_daily[bedrooms==b,], file= paste0(wd_data,"DT_daily",b,".csv"), row.names = FALSE)
+# loop for each number of bedrooms
+for( b in 1:5)  {
+  # save the DT_total_drawpatterns data as a csv file
+  write.csv(DT_total_drawpatterns[bedrooms==b], 
+            file= paste0(wd_data,"drawpatterns_",b,"bed.csv"), 
+            row.names = FALSE)
   }
-
-# save the DT_daily data as an .Rdata file
-save(DT_daily, file = paste0(wd_data,"DT_daily.Rdata"))
-
-# scatter plot of volume vs number of draws per DHWDAYUSE
-ggplot(data=DT_daily[bedrooms==3]) +
-  geom_jitter(aes(x=totvol, y= ndraw, size=people), 
-             width = 5, height = 5, alpha = 0.2 ) +
-  ggtitle( "Daily Draw Patterns" ) +
-  theme(plot.title = element_text(hjust = 0.5)) + # to center the title
-  scale_x_continuous(name = "total mixed water drawn (gallons/day)") +
-  scale_y_continuous(name = "total number of draws per day") +
-  labs(caption="from CBECC-Res19") #+ 
-  # guides(size=FALSE)
-
-

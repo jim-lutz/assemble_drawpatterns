@@ -35,6 +35,10 @@ there's one small faucet draw during a time change
 tried to use write.csv inside the data.table, was slow and couln't figure out how to limit to just the by= rows.
 
 probably should do in dplyr or some R'ish like that. simpler to do inside a loop. 
+and it worked.
+
+copied over DT_Tinlets.csv and renamed it Tinlets.csv
+
 
     
 
