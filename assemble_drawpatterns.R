@@ -71,9 +71,20 @@ DT_total_drawpatterns[ , list(ndays   = length(unique(date)),
 # 4:        4   365 63.00274 72.95947
 # 5:        5   365 71.51781 83.49977
 
+names(DT_total_drawpatterns)
+#  [1] "DHWProfile" "DHWDAYUSE"  "bedrooms"   "people"     "yday"       "wday"      
+#  [7] "date"       "start"      "enduse"     "duration"   "mixedFlow"  "hotFlow"   
+# [13] "coldFlow"   "Start_Time"
 
+# prune the data.table
+DT_total_drawpatterns[ ,c("DHWProfile", "DHWDAYUSE", "people",
+                          "hotFlow", "coldFlow") := NULL ]
 
-
+# save the data by bedrooms to csv files
+DT_total_drawpatterns[,write.csv(DT_total_drawpatterns, 
+                                 file= paste0(wd_data,"drawpatterns_",bedrooms,".csv"), 
+                                 row.names = FALSE),
+                      by='bedrooms' ]
 
 
 # save the DT_total_drawpatterns data as a csv file
