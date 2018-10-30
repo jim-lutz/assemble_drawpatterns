@@ -5,15 +5,6 @@
 # reads /home/jiml/HotWaterResearch/projects/How Low/draw_patterns/data/DT_total_drawpatterns.Rdata
 # saves to drawpattern_{1:5}bed.csv
 
-# fields are:
-#   datetime      ymd_hms as POSIXct in tz "America/Los_Angeles"
-#   yday          1-365
-#   month         "Jan" "Feb", etc.
-#   mday          1-31
-#   start         "hh:mm:ss" as character
-#   enduse        Bath	ClothesWasher	Dishwasher	Faucet	Shower
-#   duration	    seconds
-#   mxedFlow	    GPM
 # Jim Lutz  "Tue Oct 30 11:02:08 2018"
 
 # set packages & etc
@@ -23,9 +14,14 @@ source("setup.R")
 source("setup_wd.R")
 
 #  load DT_total_drawpatterns.Rdata
-load( file = "/home/jiml/HotWaterResearch/projects/How Low/draw_patterns/data/DT_total_drawpatterns.Rdata")
+load(file = "/home/jiml/HotWaterResearch/projects/How Low/draw_patterns/data/DT_total_drawpatterns.Rdata")
 
 tables()
+#                     NAME    NROW NCOL MB
+# 1: DT_total_drawpatterns 114,573   13 10
+#                                                  COLS       KEY
+# 1: DHWProfile,DHWDAYUSE,bedrooms,people,yday,wday,... DHWDAYUSE
+# Total: 10MB
 
 DT_total_drawpatterns
 str(DT_total_drawpatterns)
@@ -50,9 +46,7 @@ str(DT_total_drawpatterns)
 setkeyv(DT_total_drawpatterns, cols = c('bedrooms', 'date', 'start' ))
 
 # add Start_Time as date & start in a POSIXct format
-#DT_total_drawpatterns[ , Start_Time := paste(strftime(ymd(date),"%m/%d/%Y"),start)]
-DT_total_drawpatterns[ , Start_Time := paste(date,start)]
-DT_total_drawpatterns[ , Start_Time := ymd_hms(Start_Time, tz="America/Los_Angeles")]
+DT_total_drawpatterns[ , Start_Time := ymd_hms(paste(date,start), tz="America/Los_Angeles")]
 # Warning message:
 #   1 failed to parse. 
 
@@ -65,20 +59,17 @@ DT_total_drawpatterns[is.na(Start_Time)]
 # probably a time change day, 
 # ignore it for now, it's one small faucet draw
 
-# list number of days by bedrooms
-DT_total_drawpatterns[ , list(ndays=length(unique(date))), 
+# list number of days, ndraws and volume per day by bedrooms
+DT_total_drawpatterns[ , list(ndays   = length(unique(date)),
+                              ndraws  = length(unique(Start_Time))/365,
+                              ave.vol = sum(mixedFlow * duration/60)/365), 
                        by=c('bedrooms')]
-#    bedrooms ndays
-# 1:        1   365
-# 2:        2   365
-# 3:        3   365
-# 4:        4   365
-# 5:        5   365
-
-# list number of days and ave draws per day by bedrooms
-DT_total_drawpatterns[ , list(ndays=length(unique(date)),
-                              ndraws = ave), 
-                       by=c('bedrooms')]
+#    bedrooms ndays   ndraws  ave.vol
+# 1:        1   365 50.65479 51.90617
+# 2:        2   365 56.81918 59.03678
+# 3:        3   365 62.86027 67.13421
+# 4:        4   365 63.00274 72.95947
+# 5:        5   365 71.51781 83.49977
 
 
 
